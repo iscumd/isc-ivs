@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Basic Linux Dependencies
+# Install Basic Linux Dependencies
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     apt-utils curl wget build-essential \
     cmake git software-properties-common \
@@ -20,3 +20,15 @@ RUN apt-get install python3.11-distutils -y
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python3.11 get-pip.py
 RUN apt-get install python3.11-venv
+
+# Install ROS2 & Dependencies
+RUN apt-get update && apt-get install curl gnupg lsb-release -y
+RUN curl -sSL \
+    https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o \
+    /usr/share/keyrings/ros-archive-keyring.gpg
+
+RUN echo "deb \
+    [arch=amd64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+    http://packages.ros.org/ros2/ubuntu jammy main" \
+    | tee /etc/apt/sources.list.d/ros2.list \
+    > /dev/null
