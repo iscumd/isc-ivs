@@ -1,0 +1,49 @@
+FROM osrf/ros:foxy-desktop
+ENV ROS2_PATH /opt/ros/foxy
+
+# working directory
+ENV HOME /root
+WORKDIR $HOME
+
+# nvidia-container-runtime
+ENV NVIDIA_VISIBLE_DEVICES \
+    ${NVIDIA_VISIBLE_DEVICES:-all}
+ENV NVIDIA_DRIVER_CAPABILITIES \
+    ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
+
+# general utilities
+RUN apt-get update && apt-get install -y \
+    wget curl git gdb vim unzip \
+    nano python-dev python3-pip libgtest-dev
+
+# pip
+RUN pip3 install --upgrade pip
+
+#### ROS2 SETUP
+
+# Locale options
+RUN apt-get install -y locales
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+
+# install development tools and ROS tools
+RUN apt-get install -y \
+  build-essential cmake apt-utils \
+  python3-colcon-common-extensions \
+  python3-rosdep python3-vcstool
+
+RUN apt-get update -y && apt-get upgrade -y && \
+    apt-get autoclean  -y && apt-get autoremove -y
+
+# ----- Setting up Husky ----
+
+# dependencies
+WORKDIR $ROS2_PATH/src
+RUN git clone -b foxy-devel https://github.com/husky/husky.git
+
+WORKDIR $ROS2_PATH/lib/python3.8/site-packages/qt_gui_cpp
+RUN touch COLCON_IGNORE
+
+WORKDIR $ROS2_PATH
+RUN rosdep install --from-paths src --ignore-src --rosdistro foxy -y
+RUN /bin/bash -c 'source /opt/ros/foxy/setup.sh; colcon build --symlink-install'
