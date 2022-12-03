@@ -47,3 +47,22 @@ RUN python3 -m pip install -U \
     flake8-comprehensions flake8-deprecated flake8-docstrings flake8-import-order \
     flake8-quotes pytest-repeat pytest-rerunfailures pytest setuptools
 
+ENV ROS2_PATH /opt/ros2_humble
+RUN mkdir -p $ROS2_PATH/src
+WORKDIR $ROS2_PATH
+RUN wget https://raw.githubusercontent.com/ros2/ros2/master/ros2.repos
+RUN vcs import src < ros2.repos
+
+RUN rosdep init
+RUN rosdep update
+RUN rosdep install --from-paths src \
+    --ignore-src -y --skip-keys \
+     "fastcdr rti-connext-dds-6.0.1 urdfdom_headers"
+
+WORKDIR $ROS2_PATH
+RUN colcon build --symlink-install
+
+# Environment Setup
+SHELL ["/bin/bash", "-c"]
+RUN . $ROS2_PATH/install/local_setup.bash
+RUN source /opt/ros/rolling/setup.bash
