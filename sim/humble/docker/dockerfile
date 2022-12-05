@@ -21,7 +21,7 @@ RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python3.11 get-pip.py
 RUN apt-get install python3.11-venv
 
-# Install ROS2 & Dependencies
+# Install ROS2 Tools
 RUN apt-get update && apt-get install curl gnupg lsb-release -y
 RUN curl -sSL \
     https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o \
@@ -47,22 +47,17 @@ RUN python3 -m pip install -U \
     flake8-comprehensions flake8-deprecated flake8-docstrings flake8-import-order \
     flake8-quotes pytest-repeat pytest-rerunfailures pytest setuptools
 
-ENV ROS2_PATH /opt/ros2_humble
-RUN mkdir -p $ROS2_PATH/src
-WORKDIR $ROS2_PATH
-RUN wget https://raw.githubusercontent.com/ros2/ros2/master/ros2.repos
-RUN vcs import src < ros2.repos
-
 RUN rosdep init
 RUN rosdep update
-RUN rosdep install --from-paths src \
-    --ignore-src -y --skip-keys \
-     "fastcdr rti-connext-dds-6.0.1 urdfdom_headers"
 
-WORKDIR $ROS2_PATH
-RUN colcon build --symlink-install
+# Install ROS itself
+RUN apt-get install ros-humble-desktop -y
+
+# Install Ign Gazebo
+RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' \
+    && wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
+RUN apt update && apt-get install -y libignition-gazebo6-dev
 
 # Environment Setup
 SHELL ["/bin/bash", "-c"]
-RUN . $ROS2_PATH/install/local_setup.bash
-RUN source /opt/ros/rolling/setup.bash
+RUN echo source /opt/ros/humble/setup.bash >> /root/.bashrc
