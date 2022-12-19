@@ -9,7 +9,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     apt-utils curl wget build-essential \
     cmake git software-properties-common \
-    nano clang-12 
+    nano \
+    openssh-server
 
 # Install Python11 & Dependencies
 RUN add-apt-repository universe
@@ -47,13 +48,10 @@ RUN python3 -m pip install -U \
     flake8-comprehensions flake8-deprecated flake8-docstrings flake8-import-order \
     flake8-quotes pytest-repeat pytest-rerunfailures pytest setuptools
 
-RUN rosdep init
-RUN rosdep update
-
 # Install ROS itself
 RUN apt-get install ros-humble-desktop -y
 
-# Install Ign Gazebo
+# Install Ign Gazebo6
 RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' \
     && wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
 RUN apt update && apt-get install -y libignition-gazebo6-dev
@@ -61,3 +59,27 @@ RUN apt update && apt-get install -y libignition-gazebo6-dev
 # Environment Setup
 SHELL ["/bin/bash", "-c"]
 RUN echo source /opt/ros/humble/setup.bash >> /root/.bashrc
+
+# Setup Root ssh
+RUN mkdir /var/run/sshd
+RUN echo 'root:1234' | chpasswd
+RUN echo PermitRootLogin yes >> /etc/ssh/sshd_config
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+
+# X11 forward over SSH (X11-ception!)
+RUN echo X11DisplayOffset 10 >> /etc/ssh/sshd_config
+RUN echo X11UseLocalhost no >> /etc/ssh/sshd_config 
+RUN echo X11Forwarding yes >> /etc/ssh/sshd_config 
+
+# Other commonly changed deps (added here to avoid invalidating cache when changed)
+RUN rosdep init
+RUN rosdep update
+
+# Install Other compilers
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test
+RUN apt update && apt install -y \
+    gcc-12 clang-14
+
+# We must start ssh on boot, since systemd works weird in docker     
+ENTRYPOINT service ssh restart && bash
+EXPOSE 22
