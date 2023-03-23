@@ -51,10 +51,10 @@ RUN python3 -m pip install -U \
 # Install ROS itself
 RUN apt-get install ros-humble-desktop -y
 
-# Install Ign Gazebo6
+# Install gazebo
 RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' \
     && wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
-RUN apt update && apt-get install -y libignition-gazebo6-dev
+RUN apt update && apt-get install -y gz-garden
 
 # Environment Setup
 SHELL ["/bin/bash", "-c"]
