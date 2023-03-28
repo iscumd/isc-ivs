@@ -80,6 +80,9 @@ RUN add-apt-repository ppa:ubuntu-toolchain-r/test
 RUN apt update && apt install -y \
     gcc-12 clang-14
 
+COPY local/dds-fix.xml ../fastrtps-profile.xml
+ENV FASTRTPS_DEFAULT_PROFILES_FILE=/fastrtps-profile.xml
+
 # We must start ssh on boot, since systemd works weird in docker     
 ENTRYPOINT service ssh restart && bash
 EXPOSE 22
