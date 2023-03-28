@@ -12,6 +12,9 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     nano \
     openssh-server
 
+# networking utils
+RUN apt-get update && apt-get install -y iw iproute2 batctl && rm -rf /var/lib/apt/lists/*
+
 # Install Python11 & Dependencies
 RUN add-apt-repository universe
 RUN add-apt-repository ppa:deadsnakes/ppa
